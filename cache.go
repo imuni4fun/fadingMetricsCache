@@ -59,6 +59,9 @@ func (fmc *FadingMetricsCache) runScraperTimeoutGoRoutine() {
 
 // registers values to already-registered scraper caches
 func (fmc *FadingMetricsCache) RegisterValue(name string, labels map[string]string, value int) error {
+	if fmc.cache == nil {
+		panic("Configure() not called on FadingMetricsCache")
+	}
 	// validate label content
 	for k, v := range labels {
 		if tmp := strings.TrimSpace(k); tmp == "" || tmp != k {
@@ -101,6 +104,9 @@ func (fmc *FadingMetricsCache) RegisterValue(name string, labels map[string]stri
 
 // scrapes already-registered cache, else registers scraper cache
 func (fmc *FadingMetricsCache) Scrape(scraperKey string) map[string]string {
+	if fmc.cache == nil {
+		panic("Configure() not called on FadingMetricsCache")
+	}
 	fmc.mu.Lock()
 	defer fmc.mu.Unlock()
 	for scraper := range fmc.cache {
@@ -120,7 +126,3 @@ func (fmc *FadingMetricsCache) Scrape(scraperKey string) map[string]string {
 	fmc.cache[scraperKey] = make(map[string]string)
 	return make(map[string]string)
 }
-
-// func (fmc *FadingMetricsCache) Configure(scraperTimeout time.Duration, maxScrapers int) {
-
-// }

@@ -17,6 +17,24 @@ func TestConfigure(t *testing.T) {
 }
 
 // description of test
+func TestConfigureIsRequiredForRegisterValue(t *testing.T) {
+	cache := FadingMetricsCache{}
+	assert.Panics(t,
+		func() { _ = cache.RegisterValue("test", map[string]string{"k": "v"}, 0) },
+		"should crash since Configure not called",
+	)
+}
+
+// description of test
+func TestConfigureIsRequiredForScrape(t *testing.T) {
+	cache := FadingMetricsCache{}
+	assert.Panics(t,
+		func() { _ = cache.Scrape("a") },
+		"should crash since Configure not called",
+	)
+}
+
+// description of test
 func TestRegisterValue(t *testing.T) {
 	cache := FadingMetricsCache{}
 	cache.Configure(context.Background(), time.Second*5, 2, 1000000)
