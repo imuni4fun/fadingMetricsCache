@@ -40,6 +40,7 @@ func TestRegisterValue(t *testing.T) {
 	cache.Configure(context.Background(), time.Second*5, 2, 1000000)
 	err := cache.RegisterValue("test", map[string]string{"k": "v"}, 0)
 	assert.Nil(t, err, "RegisterValue should not return error")
+	assert.Equal(t, 0, len(cache.GetScraperKeys()), "no scrapers is registered, should not be tracked")
 }
 
 // description of test
@@ -67,7 +68,9 @@ func TestScraper(t *testing.T) {
 	cache := FadingMetricsCache{}
 	cache.Configure(context.Background(), time.Second*5, 2, 1000000)
 	cache.RegisterValue("test", map[string]string{"k": "v"}, 0)
+	assert.Equal(t, 0, len(cache.GetScraperKeys()), "no scrapers is registered, should not be tracked")
 	assert.Equal(t, 0, len(cache.Scrape("a")), "no scrapers registered, no values captured") // scraper now registered
+	assert.Equal(t, 1, len(cache.GetScraperKeys()), "scraper is registered, should be tracked")
 	cache.RegisterValue("test", map[string]string{"k": "v"}, 0)
 	assert.Equal(t, 1, len(cache.Scrape("a")), "scraper is registered, should capture value")
 }
@@ -77,11 +80,14 @@ func TestScraperClear(t *testing.T) {
 	cache := FadingMetricsCache{}
 	cache.Configure(context.Background(), time.Second*5, 2, 1000000)
 	cache.RegisterValue("test", map[string]string{"k": "v"}, 0)
+	assert.Equal(t, 0, len(cache.GetScraperKeys()), "no scrapers is registered, should not be tracked")
 	assert.Equal(t, 0, len(cache.Scrape("a")), "no scrapers registered, no values captured") // scraper now registered
 	cache.RegisterValue("test", map[string]string{"k": "v"}, 0)
+	assert.Equal(t, 1, len(cache.GetScraperKeys()), "scraper is registered, should be tracked")
 	assert.Equal(t, 1, len(cache.Scrape("a")), "scraper is registered, should capture value")
 	assert.Equal(t, 0, len(cache.Scrape("a")), "scraper is registered, no new values")
 	cache.RegisterValue("test", map[string]string{"k": "v"}, 0)
+	assert.Equal(t, 1, len(cache.GetScraperKeys()), "scraper is registered, should be tracked")
 	assert.Equal(t, 1, len(cache.Scrape("a")), "scraper is registered, should capture value")
 	assert.Equal(t, 0, len(cache.Scrape("a")), "scraper is registered, no new values")
 }
@@ -95,8 +101,11 @@ func TestScraperTimeout(t *testing.T) {
 	cache.RegisterValue("test", map[string]string{"k": "v"}, 0)
 	assert.Equal(t, 1, len(cache.Scrape("a")), "scraper is registered, should capture value")
 	cache.RegisterValue("test", map[string]string{"k": "v"}, 0)
-	time.Sleep(1500 * time.Millisecond)
+	assert.Equal(t, 1, len(cache.GetScraperKeys()), "scraper is registered, should be tracked")
+	time.Sleep(1500 * time.Millisecond) // timeout clears scrapers
+	assert.Equal(t, 0, len(cache.GetScraperKeys()), "scraper should be unregistered, should not be tracked")
 	assert.Equal(t, 0, len(cache.Scrape("a")), "scraper was just registered, values were cleared by timeout")
+	assert.Equal(t, 1, len(cache.GetScraperKeys()), "scraper is registered, should be tracked")
 }
 
 // description of test
@@ -104,16 +113,21 @@ func TestMultiScraperTimeout(t *testing.T) {
 	cache := FadingMetricsCache{}
 	cache.Configure(context.Background(), time.Second*1, 2, 1000000)
 	cache.RegisterValue("test", map[string]string{"k": "v"}, 0)
+	assert.Equal(t, 0, len(cache.GetScraperKeys()), "scrapers not registered, should not be tracked")
 	assert.Equal(t, 0, len(cache.Scrape("a")), "scraper not registered, no values captured")
 	assert.Equal(t, 0, len(cache.Scrape("b")), "scraper not registered, no values captured")
+	assert.Equal(t, 2, len(cache.GetScraperKeys()), "scrapers are registered, should be tracked")
 	cache.RegisterValue("test", map[string]string{"k": "v"}, 0)
 	assert.Equal(t, 1, len(cache.Scrape("a")), "scraper is registered, should capture value")
 	assert.Equal(t, 1, len(cache.Scrape("b")), "scraper is registered, should capture value")
 	cache.RegisterValue("test", map[string]string{"k": "v"}, 0)
 	assert.Equal(t, 1, len(cache.Scrape("a")), "scraper is registered, should capture value")
-	time.Sleep(1500 * time.Millisecond)
+	assert.Equal(t, 2, len(cache.GetScraperKeys()), "scrapers are registered, should be tracked")
+	time.Sleep(1500 * time.Millisecond) // timeout clears scrapers
+	assert.Equal(t, 0, len(cache.GetScraperKeys()), "scrapers not registered, should not be tracked")
 	assert.Equal(t, 0, len(cache.Scrape("b")), "scraper was just registered, values were cleared by timeout")
 	assert.Equal(t, 0, len(cache.Scrape("a")), "scraper was just registered, values were cleared by timeout")
+	assert.Equal(t, 2, len(cache.GetScraperKeys()), "scrapers are registered, should be tracked")
 }
 
 // description of test

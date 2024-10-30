@@ -126,3 +126,23 @@ func (fmc *FadingMetricsCache) Scrape(scraperKey string) map[string]string {
 	fmc.cache[scraperKey] = make(map[string]string)
 	return make(map[string]string)
 }
+
+func (fmc *FadingMetricsCache) GetScraperKeys() []string {
+	list := []string{}
+	fmc.mu.Lock()
+	defer fmc.mu.Unlock()
+	for scraper := range fmc.cache {
+		list = append(list, scraper)
+	}
+	return list
+}
+
+func (fmc *FadingMetricsCache) GetScraperEntryCounts() map[string]int {
+	counts := map[string]int{}
+	fmc.mu.Lock()
+	defer fmc.mu.Unlock()
+	for scraper := range fmc.cache {
+		counts[scraper] = len(fmc.cache[scraper])
+	}
+	return counts
+}
