@@ -58,7 +58,7 @@ func (fmc *FadingMetricsCache) runScraperTimeoutGoRoutine() {
 }
 
 // registers values to already-registered scraper caches
-func (fmc *FadingMetricsCache) RegisterValue(name string, labels map[string]string, value int) error {
+func (fmc *FadingMetricsCache) RegisterValue(name string, labels map[string]string, value float32) error {
 	if fmc.cache == nil {
 		panic("Configure() not called on FadingMetricsCache")
 	}
@@ -92,7 +92,7 @@ func (fmc *FadingMetricsCache) RegisterValue(name string, labels map[string]stri
 		keys[i] = fmt.Sprintf("%s=\"%s\"", k, labels[k])
 	}
 	seriesKey := fmt.Sprintf("%s{%s}", name, strings.Join(keys, ","))
-	seriesValue := fmt.Sprintf("%d %d", value, time.Now().UnixMilli())
+	seriesValue := fmt.Sprintf("%f %d", value, time.Now().UnixMilli())
 
 	fmc.mu.Lock()
 	defer fmc.mu.Unlock()
