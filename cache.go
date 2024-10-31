@@ -58,7 +58,7 @@ func (fmc *FadingMetricsCache) runScraperTimeoutGoRoutine() {
 }
 
 // registers values to already-registered scraper caches
-func (fmc *FadingMetricsCache) RegisterValue(name string, labels map[string]string, value float32) error {
+func (fmc *FadingMetricsCache) RegisterValue(name string, labels map[string]string, value float64) error {
 	if fmc.cache == nil {
 		panic("Configure() not called on FadingMetricsCache")
 	}
