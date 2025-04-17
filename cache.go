@@ -21,7 +21,8 @@ type FadingMetricsCache struct {
 	mu             sync.Mutex
 }
 
-func (fmc *FadingMetricsCache) Configure(context context.Context, scraperTimeout time.Duration, maxScrapers, maxCacheKeys int) {
+func (fmc *FadingMetricsCache) Configure(context context.Context, scraperTimeout time.Duration, maxScrapers, maxCacheKeys int /*, logEnvVarName string*/) {
+	// initLog(logEnvVarName)
 	fmc.context = context
 	fmc.scraperTimeout = scraperTimeout
 	fmc.maxScrapers = maxScrapers
@@ -58,7 +59,7 @@ func (fmc *FadingMetricsCache) runScraperTimeoutGoRoutine() {
 }
 
 // registers values to already-registered scraper caches
-func (fmc *FadingMetricsCache) RegisterValue(name string, labels map[string]string, value float64) error {
+func (fmc *FadingMetricsCache) RegisterValue(name string, labels map[string]string, value float64, includeTimestamp bool) error {
 	if fmc.cache == nil {
 		panic("Configure() not called on FadingMetricsCache")
 	}
@@ -92,7 +93,12 @@ func (fmc *FadingMetricsCache) RegisterValue(name string, labels map[string]stri
 		keys[i] = fmt.Sprintf("%s=\"%s\"", k, labels[k])
 	}
 	seriesKey := fmt.Sprintf("%s{%s}", name, strings.Join(keys, ","))
-	seriesValue := fmt.Sprintf("%f %d", value, time.Now().UnixMilli())
+	var seriesValue string
+	if includeTimestamp {
+		seriesValue = fmt.Sprintf("%f %d", value, time.Now().UnixMilli())
+	} else {
+		seriesValue = fmt.Sprintf("%f", value)
+	}
 
 	fmc.mu.Lock()
 	defer fmc.mu.Unlock()
