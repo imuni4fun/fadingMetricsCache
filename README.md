@@ -12,6 +12,28 @@ The aim of this lib is to support exactly once delivery for metrics that are nor
 
 [IGNORED] `maxCacheKeys` is the max events to track for each scraper. If exceeded, events will be dropped until cleared by the next scrape.
 
+## Example Use
+
+```
+cache := FadingMetricsCache{} // not usable yet
+
+cache.Configure(context.Background(), time.Second*5, 2, 1000) // usable
+
+cache.Scrape("scraper_identity") // this scraper is now registered
+
+// any events that are registered will be stored for each tracked scraper
+// note that the value is 1 for this data point... it could be any floating point number
+// note timestamp is NOT used in order to induce staleness marker in Prometheus
+cache.RegisterValue("events_to_metrics", map[string]string{"test":"verify_thing","result": "pass"}, 1, false)
+
+// scrape with a new scraper, it will be tracked but first scrape will be empty
+assert.Equal(t, 0, len(cache.Scrape("new")), "new scraper is now registered, no entries yet")
+
+// scrape twice with already-present scraper, it will deliver the received event only once
+assert.Equal(t, 1, len(cache.Scrape("scraper_identity")), "scraper is registered, has example event")
+assert.Equal(t, 0, len(cache.Scrape("scraper_identity")), "scraper is registered, no new values since last scrap")
+```
+
 ## Tests
 
 ### Configuration
